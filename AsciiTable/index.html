@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Table</title>
+    <style>
+        .header {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        }
+
+        .header img {
+          height: 1.5em;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 2000px;
+            margin: 0 auto;
+        }
+        .ascii-section {
+            margin-bottom: 30px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+        }
+        .column-group {
+            border: 2px solid #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            flex: 1;
+            min-width: 330px;
+            max-width: 450px;
+            margin: 2.5px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 6px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            height: 10px;
+            line-height: 10px;
+            vertical-align: middle;
+        }
+        
+        /* Different widths for control character columns vs regular columns */
+        .control-char-column th:nth-child(1), .control-char-column td:nth-child(1) { width: 12%; } /* Dec */
+        .control-char-column th:nth-child(2), .control-char-column td:nth-child(2) { width: 12%; } /* Hex */
+        .control-char-column th:nth-child(3), .control-char-column td:nth-child(3) { width: 12%; } /* Oct */
+        .control-char-column th:nth-child(4), .control-char-column td:nth-child(4) { width: 27%; } /* Bin */
+        .control-char-column th:nth-child(5), .control-char-column td:nth-child(5) { width: 37%; } /* Char */
+        
+        .regular-char-column th:nth-child(1), .regular-char-column td:nth-child(1) { width: 12%; } /* Dec */
+        .regular-char-column th:nth-child(2), .regular-char-column td:nth-child(2) { width: 12%; } /* Hex */
+        .regular-char-column th:nth-child(3), .regular-char-column td:nth-child(3) { width: 12%; } /* Oct */
+        .regular-char-column th:nth-child(4), .regular-char-column td:nth-child(4) { width: 27%; } /* Bin */
+        .regular-char-column th:nth-child(5), .regular-char-column td:nth-child(5) { width: 18%; } /* Char */
+        .regular-char-column th:nth-child(6), .regular-char-column td:nth-child(6) { width: 19%; } /* HTML */
+        
+        th {
+            background-color: #f2f2f2;
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+            //font-size: 0.9em;
+        }
+        td {
+            padding: 6px 4px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+            position: relative;
+        }
+        .ascii-char {
+            font-family: monospace;
+            font-size: 1.2em;
+            line-height: 12px;
+        }
+        .control-char {
+            font-family: monospace;
+            font-size: 1.2em;
+            line-height: 12px;
+            cursor: help;
+        }
+        .highlight {
+            background-color: #fffde7;
+        }
+        
+        /* Additional styling for the HTML column */
+        .html-entity {
+            font-family: monospace;
+            color: #0066cc;
+        }
+        td:hover {
+            white-space: normal;
+            overflow: visible;
+            z-index: 1;
+            position: relative;
+            background-color: #f8f8f8;
+        }
+        
+        /* Binary column styling */
+        .binary {
+            font-family: monospace;
+            font-size: 1.2em;
+        }
+        
+        @media (max-width: 768px) {
+            .table-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .column-group {
+                width: 100%;
+                max-width: 400px;
+            }
+            .control-char-column th:nth-child(5), .control-char-column td:nth-child(5) { width: 52%; } /* Keep Char column wide on mobile */
+            .regular-char-column th:nth-child(5), .regular-char-column td:nth-child(5) { width: 25%; } /* Maintain Char column width */
+            .regular-char-column th:nth-child(6), .regular-char-column td:nth-child(6) { width: 31%; } /* Slightly narrower HTML column on mobile */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ASCII Table</h1>
+            <a href="https://github.com/YangGangUEFI/web-tools" target="_blank">
+              <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub" />
+            </a>
+        </div>
+        
+        <div class="ascii-section">
+            <h2>Basic ASCII (0-127)</h2>
+            <div class="table-container" id="basic-ascii"></div>
+        </div>
+        
+        <div class="ascii-section">
+            <h2>Extended ASCII (128-255) - CP437</h2>
+            <div class="table-container" id="extended-ascii"></div>
+        </div>
+    </div>
+
+    <script>
+        // CP437 Character mapping function
+        function getCP437Char(code) {
+            // CP437 mapping for extended ASCII (128-255)
+            const cp437Map = [
+                'Ç', 'ü', 'é', 'â', 'ä', 'à', 'å', 'ç', 'ê', 'ë', 'è', 'ï', 'î', 'ì', 'Ä', 'Å',
+                'É', 'æ', 'Æ', 'ô', 'ö', 'ò', 'û', 'ù', 'ÿ', 'Ö', 'Ü', '¢', '£', '¥', '₧', 'ƒ',
+                'á', 'í', 'ó', 'ú', 'ñ', 'Ñ', 'ª', 'º', '¿', '⌐', '¬', '½', '¼', '¡', '«', '»',
+                '░', '▒', '▓', '│', '┤', '╡', '╢', '╖', '╕', '╣', '║', '╗', '╝', '╜', '╛', '┐',
+                '└', '┴', '┬', '├', '─', '┼', '╞', '╟', '╚', '╔', '╩', '╦', '╠', '═', '╬', '╧',
+                '╨', '╤', '╥', '╙', '╘', '╒', '╓', '╫', '╪', '┘', '┌', '█', '▄', '▌', '▐', '▀',
+                'α', 'ß', 'Γ', 'π', 'Σ', 'σ', 'µ', 'τ', 'Φ', 'Θ', 'Ω', 'δ', '∞', 'φ', 'ε', '∩',
+                '≡', '±', '≥', '≤', '⌠', '⌡', '÷', '≈', '°', '∙', '·', '√', 'ⁿ', '²', '■', ' '
+            ];
+            
+            if (code >= 128 && code <= 255) {
+                return cp437Map[code - 128];
+            }
+            return String.fromCharCode(code);
+        }
+        
+        // Control character descriptions
+        const controlChars = {
+            0: "NUL (Null)",
+            1: "SOH (Start of Heading)",
+            2: "STX (Start of Text)",
+            3: "ETX (End of Text)",
+            4: "EOT (End of Transmission)",
+            5: "ENQ (Enquiry)",
+            6: "ACK (Acknowledgment)",
+            7: "BEL (Bell)",
+            8: "BS (Backspace)",
+            9: "HT (Horizontal Tab)",
+            10: "LF (Line Feed)",
+            11: "VT (Vertical Tab)",
+            12: "FF (Form Feed)",
+            13: "CR (Carriage Return)",
+            14: "SO (Shift Out)",
+            15: "SI (Shift In)",
+            16: "DLE (Data Link Escape)",
+            17: "DC1 (Device Control 1)",
+            18: "DC2 (Device Control 2)",
+            19: "DC3 (Device Control 3)",
+            20: "DC4 (Device Control 4)",
+            21: "NAK (Negative Acknowledgment)",
+            22: "SYN (Synchronous Idle)",
+            23: "ETB (End of Transmission Block)",
+            24: "CAN (Cancel)",
+            25: "EM (End of Medium)",
+            26: "SUB (Substitute)",
+            27: "ESC (Escape)",
+            28: "FS (File Separator)",
+            29: "GS (Group Separator)",
+            30: "RS (Record Separator)",
+            31: "US (Unit Separator)",
+            32: "SPACE",
+            127: "DEL (Delete)"
+        };
+
+        // Function to convert decimal to octal
+        function toOctal(dec) {
+            return dec.toString(8).padStart(3, '0');
+        }
+
+        // Function to convert decimal to hex
+        function toHex(dec) {
+            return dec.toString(16).toUpperCase().padStart(2, '0');
+        }
+        
+        // Function to convert decimal to binary
+        function toBinary(dec) {
+            return dec.toString(2).padStart(8, '0');
+        }
+
+        // Function to get character representation
+        function getCharRepresentation(dec) {
+            if (dec in controlChars) {
+                const shortName = dec === 32 ? "SPACE" : 
+                                 dec === 127 ? "DEL" : 
+                                 controlChars[dec].split(' ')[0];
+                
+                return `<span class="control-char" title="${controlChars[dec]}">${shortName}</span>`;
+            } else if (dec >= 0 && dec <= 127) {
+                return `<span class="ascii-char">${String.fromCharCode(dec)}</span>`;
+            } else {
+                // Extended ASCII - CP437
+                try {
+                    // Map to CP437 character set
+                    const cp437Char = getCP437Char(dec);
+                    return `<span class="ascii-char">${cp437Char}</span>`;
+                } catch (e) {
+                    return '<span class="control-char">N/A</span>';
+                }
+            }
+        }
+        
+        // Function to get HTML entity representation
+        function getHtmlEntity(dec) {
+            if (dec in controlChars || dec === 32) {
+                return '-';
+            } else {
+                return `&#${dec};`;
+            }
+        }
+
+        // Function to create a table column group
+        function createColumnGroup(startDec, endDec) {
+            const columnGroup = document.createElement('div');
+            columnGroup.className = 'column-group';
+            
+            // Add class to identify columns with control characters
+            // assume 32 & 127 not control char to keep HTML column
+            const hasControlChars = (startDec <= 31 && endDec >= 0);
+            columnGroup.classList.add(hasControlChars ? 'control-char-column' : 'regular-char-column');
+            
+            const table = document.createElement('table');
+            
+            // Create header row
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            // All columns headers
+            const headers = ['Dec', 'Hex', 'Oct', 'Bin', 'Char', 'HTML'];
+            
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Create table body
+            const tbody = document.createElement('tbody');
+            
+            for (let dec = startDec; dec <= endDec; dec++) {
+                const row = document.createElement('tr');
+                
+                // Dec column
+                const decCell = document.createElement('td');
+                decCell.textContent = dec;
+                row.appendChild(decCell);
+                
+                // Hex column
+                const hexCell = document.createElement('td');
+                hexCell.textContent = toHex(dec);
+                row.appendChild(hexCell);
+                
+                // Oct column
+                const octCell = document.createElement('td');
+                octCell.textContent = toOctal(dec);
+                row.appendChild(octCell);
+                
+                // Binary column
+                const binCell = document.createElement('td');
+				binCell.textContent = toBinary(dec);
+                row.appendChild(binCell);
+                
+                // Char column
+                const charCell = document.createElement('td');
+                charCell.innerHTML = getCharRepresentation(dec);
+                row.appendChild(charCell);
+                
+                // HTML column
+                const htmlCell = document.createElement('td');
+                htmlCell.textContent = getHtmlEntity(dec);
+                row.appendChild(htmlCell);
+                
+                // Highlight alternate rows
+                if ((Math.floor((dec - startDec) / 1)) % 2 === 0) {
+                    row.className = 'highlight';
+                }
+                
+                tbody.appendChild(row);
+            }
+            
+            table.appendChild(tbody);
+            columnGroup.appendChild(table);
+            
+            return columnGroup;
+        }
+
+        // Function to generate the ASCII tables with responsive columns
+        function generateASCIITables() {
+            const basicAsciiContainer = document.getElementById('basic-ascii');
+            const extendedAsciiContainer = document.getElementById('extended-ascii');
+            
+            // Clear existing content
+            basicAsciiContainer.innerHTML = '';
+            extendedAsciiContainer.innerHTML = '';
+            
+            // Generate Basic ASCII Table with exactly 32 characters per column
+            const basicRanges = [
+                [0, 31],
+                [32, 63],
+                [64, 95],
+                [96, 127]
+            ];
+            
+            // Always show all ranges, regardless of screen size
+            basicRanges.forEach(range => {
+                const columnGroup = createColumnGroup(range[0], range[1]);
+                basicAsciiContainer.appendChild(columnGroup);
+            });
+            
+            // Generate Extended ASCII Table with exactly 32 characters per column
+            const extendedRanges = [
+                [128, 159],
+                [160, 191],
+                [192, 223],
+                [224, 255]
+            ];
+            
+            // Always show all ranges, regardless of screen size
+            extendedRanges.forEach(range => {
+                const columnGroup = createColumnGroup(range[0], range[1]);
+                extendedAsciiContainer.appendChild(columnGroup);
+            });
+        }
+
+        // Generate tables on initial load
+        generateASCIITables();
+        
+        // Regenerate tables when window is resized
+        window.addEventListener('resize', generateASCIITables);
+    </script>
+</body>
+</html>
