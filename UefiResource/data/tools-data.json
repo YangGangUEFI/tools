@@ -1,0 +1,142 @@
+[
+    {
+        "category": "data",
+        "icon": "fas fa-table",
+        "name": "ASCII Table",
+        "description": "ASCII码表查询工具，可以方便地查询ASCII码对应的字符和十六进制值。",
+        "url": "https://yangganguefi.github.io/tools/AsciiTable/",
+        "linkText": "打开工具",
+        "tags": ["数据", "开发"],
+        "section": "tools"
+    },
+    {
+        "category": "converter",
+        "icon": "fas fa-exchange-alt",
+        "name": "EDK2 Depex GUID Parser",
+        "description": "提取 .depex 中的 GUID 数据。",
+        "url": "https://yangganguefi.github.io/Edk2DepexGUIDParser/",
+        "linkText": "打开工具",
+        "tags": ["Depex", "GUID"],
+        "section": "tools"
+    },
+    {
+        "category": "converter",
+        "icon": "fas fa-font",
+        "name": "EFI_WIDE_GLYPH 汉字字库生成器",
+        "description": "生成 UEFI EFI_WIDE_GLYPH 格式的汉字字库，可自由选择字体并预览点阵。",
+        "url": "https://yangganguefi.github.io/UEFIChineseFontGenerate/",
+        "linkText": "打开工具",
+        "tags": ["UEFI 字库", "开发"],
+        "section": "tools"
+    },
+    {
+        "category": "converter",
+        "icon": "fa-brands fa-usb",
+        "name": "USB 标准请求及描述符在线解析",
+        "description": "USB 标准请求及描述符在线解析。",
+        "url": "https://www.usbzh.com/tool/usb.html",
+        "linkText": "打开工具",
+        "tags": ["USB", "开发"],
+        "section": "tools"
+    },
+    {
+        "category": "website",
+        "icon": "fa-brands fa-internet-explorer",
+        "name": "UEFI Forum 官方网站",
+        "description": "发布 UEFI 规范文档（如 UEFI Spec、PI Spec、ACPI Spec 等），提供会员信息、行业动态、会议资料等。",
+        "url": "https://uefi.org/",
+        "linkText": "打开网站",
+        "tags": ["规范", "官网"],
+        "section": "websites"
+    },
+    {
+        "category": "website",
+        "icon": "fa-brands fa-internet-explorer",
+        "name": "TianoCore 官方网站",
+        "description": "EDK II 项目的官方主页。",
+        "url": "https://www.tianocore.org/",
+        "linkText": "打开网站",
+        "tags": ["规范", "官网"],
+        "section": "websites"
+    },
+    {
+        "category": "website",
+        "icon": "fa-brands fa-internet-explorer",
+        "name": "FirmwareResources",
+        "description": "各种规范、工具、工具链、官方网站等。",
+        "url": "https://github.com/vangoghynot/FirmwareResources",
+        "linkText": "打开网站",
+        "tags": ["规范", "官网"],
+        "section": "websites"
+    },
+    {
+        "category": "website",
+        "icon": "fa-brands fa-internet-explorer",
+        "name": "The PCI ID Repository",
+        "description": "PCI Device Vendors 及 Classes。",
+        "url": "https://pci-ids.ucw.cz/",
+        "linkText": "打开网站",
+        "tags": ["PCI VendorId", "PCI Class"],
+        "section": "websites"
+    },
+    {
+        "category": "website",
+        "icon": "fa-brands fa-internet-explorer",
+        "name": "OSDev.org",
+        "description": "操作系统开发相关内容。",
+        "url": "https://wiki.osdev.org/",
+        "linkText": "打开网站",
+        "tags": ["WIKI", "操作系统"],
+        "section": "websites"
+    },
+    {
+        "category": "website",
+        "icon": "fa-brands fa-internet-explorer",
+        "name": "Intel UEFI",
+        "description": "UEFI 相关 training 材料、工具等。",
+        "url": "https://www.intel.com/content/www/us/en/developer/articles/tool/unified-extensible-firmware-interface.html",
+        "linkText": "打开网站",
+        "tags": ["Tools", "Training"],
+        "section": "websites"
+    },
+    {
+        "category": "blog",
+        "icon": "fa-brands fa-zhihu",
+        "name": "UEFI和BIOS探秘",
+        "description": "一起来探索UEFI/BIOS和固件的秘密。老狼的知乎专栏。",
+        "url": "https://www.zhihu.com/column/UEFIBlog",
+        "linkText": "打开网站",
+        "tags": ["文章", "知识"],
+        "section": "blogs"
+    },
+    {
+        "category": "blog",
+        "icon": "fa-solid fa-blog",
+        "name": "LAB-Z",
+        "description": "UEFI 相关实验或经验分享。",
+        "url": "https://www.lab-z.com/",
+        "linkText": "打开网站",
+        "tags": ["文章", "知识"],
+        "section": "blogs"
+    },
+    {
+        "category": "blog",
+        "icon": "fa-solid fa-blog",
+        "name": "易也技术",
+        "description": "UEFI开发探索 && UEFI编程实践。",
+        "url": "http://yiiyee.cn/blog/",
+        "linkText": "打开网站",
+        "tags": ["文章", "知识"],
+        "section": "blogs"
+    },
+    {
+        "category": "blog",
+        "icon": "fa-brands fa-zhihu",
+        "name": "UEFI Lab",
+        "description": "个人专栏，分享一些 UEFI 相关内容。",
+        "url": "https://www.zhihu.com/column/c_1895946061538906932",
+        "linkText": "打开网站",
+        "tags": ["文章", "分享"],
+        "section": "blogs"
+    }
+]

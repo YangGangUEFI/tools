@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UEFI Resource - UEFI 资源</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="./" class="logo">
+                <i class="fas fa-star"></i>
+                <h1>UEFI Resource - UEFI 资源</h1>
+            </a>
+            <button class="theme-toggle" id="theme-toggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </header>
+
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" id="search-input" placeholder="搜索...">
+        </div>
+
+        <div class="filter-container" id="filter-container">
+            <button class="filter-btn active" data-category="all">全部</button>
+            <!-- 过滤按钮将通过JavaScript动态生成 -->
+        </div>
+
+        <h2 class="category-title">常用工具</h2>
+        <div class="tools-grid" id="tools-grid">
+            <!-- 工具卡片将通过JavaScript动态生成 -->
+        </div>
+
+        <h2 class="category-title">常用网站</h2>
+        <div class="tools-grid" id="websites-grid">
+            <!-- 网站卡片将通过JavaScript动态生成 -->
+        </div>
+
+        <h2 class="category-title">文章资讯</h2>
+        <div class="tools-grid" id="blogs-grid">
+            <!-- 博客卡片将通过JavaScript动态生成 -->
+        </div>
+
+    </div>
+
+    <footer>
+        <p>
+            © <span id="current-year"></span> 
+            <span class="footer-name">
+                Yang Gang
+                <a href="https://github.com/YangGangUEFI" target="_blank" class="github-link">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub" />
+                </a>
+            </span>
+        </p>
+    </footer>
+
+    <script src="js/script.js"></script>
+    
+</body>
+</html>
