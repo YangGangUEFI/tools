@@ -133,6 +133,7 @@
         
         @media (max-width: 768px) {
             .table-container {
+                flex-wrap: nowrap;
                 flex-direction: column;
                 align-items: center;
             }
@@ -140,9 +141,6 @@
                 width: 100%;
                 max-width: 400px;
             }
-            .control-char-column th:nth-child(5), .control-char-column td:nth-child(5) { width: 52%; } /* Keep Char column wide on mobile */
-            .regular-char-column th:nth-child(5), .regular-char-column td:nth-child(5) { width: 25%; } /* Maintain Char column width */
-            .regular-char-column th:nth-child(6), .regular-char-column td:nth-child(6) { width: 31%; } /* Slightly narrower HTML column on mobile */
         }
     </style>
 </head>
