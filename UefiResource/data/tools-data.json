@@ -81,6 +81,16 @@
     },
     {
         "category": "website",
+        "icon": "fa-brands fa-usb",
+        "name": "The USB ID Repository",
+        "description": "USB Device Vendors 及 Classes。",
+        "url": "https://usb-ids.gowdy.us/",
+        "linkText": "打开网站",
+        "tags": ["USB VendorId", "USB Class"],
+        "section": "websites"
+    },
+    {
+        "category": "website",
         "icon": "fa-brands fa-internet-explorer",
         "name": "OSDev.org",
         "description": "操作系统开发相关内容。",
