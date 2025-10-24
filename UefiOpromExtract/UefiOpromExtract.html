@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UEFI Option ROM 解析工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #app {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 50px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+
+        .drop-zone:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .drop-zone-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .drop-zone-text {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone-hint {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .file-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .info-value {
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .drivers-section {
+            margin-top: 30px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .download-all-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .download-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .driver-item {
+            background: #f8f9ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .driver-item:hover {
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .driver-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .driver-badges {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .driver-type {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .driver-compressed {
+            background: #f59e0b;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .driver-standalone {
+            background: #10b981;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .driver-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            font-size: 0.9em;
+        }
+
+        .detail-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: #333;
+            margin-left: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #c33;
+            margin-top: 20px;
+        }
+
+        .warning {
+            background: #fef3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            margin-top: 20px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            margin-top: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .vendor-info {
+            background: #e8f5e9;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .vendor-label {
+            font-weight: 600;
+            color: #2e7d32;
+        }
+
+        .pe-info {
+            background: #e3f2fd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .pe-label {
+            font-weight: 600;
+            color: #1565c0;
+        }
+        
+        .github-link img {
+            width: 20px;
+            height: 20px;
+            vertical-align: bottom;
+            transition: opacity 0.3s;
+        }
+        
+        .github-link img:hover {
+            opacity: 0.7;
+        }
+        
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>🔧 UEFI Option ROM 解析工具</h1>
+            <p>上传 UEFI OpRom、固件文件或 EFI 文件以查看驱动信息</p>
+            <p>
+                © <span id="current-year"></span> 
+                  Yang Gang
+                  <a href="https://github.com/YangGangUEFI" target="_blank" class="github-link">
+                      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub" />
+                  </a>
+            </p>
+        </div>
+
+        <div class="card">
+            <div 
+                class="drop-zone" 
+                :class="{ 'drag-over': isDragging }"
+                @click="triggerFileInput"
+                @dragover.prevent="isDragging = true"
+                @dragleave.prevent="isDragging = false"
+                @drop.prevent="handleDrop"
+            >
+                <div class="drop-zone-icon">📁</div>
+                <div class="drop-zone-text">点击或拖拽文件到此处</div>
+                <div class="drop-zone-hint">支持 .bin, .rom, .efi 等文件</div>
+            </div>
+            <input 
+                type="file" 
+                ref="fileInput" 
+                @change="handleFileSelect"
+                accept=".bin,.rom,.efi"
+            >
+
+            <div v-if="error" class="error">
+                ❌ {{ error }}
+            </div>
+
+            <div v-if="warning" class="warning">
+                ⚠️ {{ warning }}
+            </div>
+
+            <div v-if="fileInfo" class="file-info">
+                <h3 style="margin-bottom: 15px;">📄 文件信息</h3>
+                <div class="info-row">
+                    <span class="info-label">文件名:</span>
+                    <span class="info-value">{{ fileInfo.name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">文件大小:</span>
+                    <span class="info-value">{{ formatSize(fileInfo.size) }}</span>
+                </div>
+                <div class="info-row" v-if="fileInfo.type">
+                    <span class="info-label">文件类型:</span>
+                    <span class="info-value">{{ fileInfo.type }}</span>
+                </div>
+                <div class="info-row" v-if="fileInfo.romCount > 0">
+                    <span class="info-label">检测到的 ROM 镜像:</span>
+                    <span class="info-value">{{ fileInfo.romCount }} 个</span>
+                </div>
+            </div>
+
+            <div v-if="drivers.length > 0" class="drivers-section">
+                <div class="section-title">
+                    <span>🚗 {{ fileInfo.type === 'EFI 文件' ? 'EFI 文件信息' : `检测到的 EFI 驱动 (${drivers.length})` }}</span>
+                    <button class="download-all-btn" @click="downloadAll" v-if="drivers.length > 1">
+                        ⬇️ 下载全部
+                    </button>
+                </div>
+                
+                <div v-for="(driver, index) in drivers" :key="index" class="driver-item">
+                    <div class="driver-header">
+                        <div class="driver-badges">
+                            <div class="driver-type">{{ getCodeTypeName(driver.codeType) }}</div>
+                            <div class="driver-compressed" v-if="driver.compressed">已压缩</div>
+                            <div class="driver-standalone" v-if="driver.isStandalone">独立 EFI</div>
+                        </div>
+                        <button class="download-btn" @click="downloadDriver(driver, index)" v-if="!driver.isStandalone">
+                            ⬇️ 下载
+                        </button>
+                    </div>
+                    
+                    <div class="driver-details">
+                        <div class="detail-item" v-if="!driver.isStandalone">
+                            <span class="detail-label">ROM 偏移:</span>
+                            <span class="detail-value">0x{{ driver.imageStart.toString(16).toUpperCase() }}</span>
+                        </div>
+                        <div class="detail-item" v-if="!driver.isStandalone">
+                            <span class="detail-label">ROM 镜像大小:</span>
+                            <span class="detail-value">{{ formatSize(driver.imageLength * 512) }}</span>
+                        </div>
+                        <div class="detail-item" v-if="driver.efiOffset !== undefined">
+                            <span class="detail-label">EFI 绝对偏移:</span>
+                            <span class="detail-value">0x{{ driver.efiOffset.toString(16).toUpperCase() }}</span>
+                        </div>
+                        <div class="detail-item" v-if="driver.efiImageHeaderOffset !== undefined">
+                            <span class="detail-label">EFI 头偏移:</span>
+                            <span class="detail-value">0x{{ driver.efiImageHeaderOffset.toString(16).toUpperCase() }} (相对ROM)</span>
+                        </div>
+                        <div class="detail-item" v-if="driver.firstBytes">
+                            <span class="detail-label">文件头:</span>
+                            <span class="detail-value">{{ driver.firstBytes }}</span>
+                        </div>
+                        <div class="detail-item" v-if="driver.efiSize">
+                            <span class="detail-label">EFI 大小:</span>
+                            <span class="detail-value">{{ formatSize(driver.efiSize) }}</span>
+                        </div>
+                        <div class="detail-item" v-if="driver.machineType">
+                            <span class="detail-label">CPU 架构:</span>
+                            <span class="detail-value">{{ getArchName(driver.machineType) }}</span>
+                        </div>
+                        <div class="detail-item" v-if="driver.subsystem">
+                            <span class="detail-label">子系统:</span>
+                            <span class="detail-value">{{ getSubsystemName(driver.subsystem) }}</span>
+                        </div>
+                        <div class="detail-item" v-if="driver.efiSignature">
+                            <span class="detail-label">EFI 签名:</span>
+                            <span class="detail-value">0x{{ driver.efiSignature.toString(16).toUpperCase() }}</span>
+                        </div>
+                        <div class="detail-item" v-if="!driver.isStandalone">
+                            <span class="detail-label">最后镜像:</span>
+                            <span class="detail-value">{{ driver.isLast ? '是' : '否' }}</span>
+                        </div>
+                        <div class="detail-item" v-if="driver.peSignature">
+                            <span class="detail-label">PE 签名:</span>
+                            <span class="detail-value">{{ driver.peSignature }}</span>
+                        </div>
+                        <div class="detail-item" v-if="driver.sectionCount !== undefined">
+                            <span class="detail-label">PE 节数:</span>
+                            <span class="detail-value">{{ driver.sectionCount }}</span>
+                        </div>
+                        <div class="detail-item" v-if="driver.imageBase !== undefined">
+                            <span class="detail-label">镜像基址:</span>
+                            <span class="detail-value">0x{{ driver.imageBase.toString(16).toUpperCase() }}</span>
+                        </div>
+                        <div class="detail-item" v-if="driver.entryPoint !== undefined">
+                            <span class="detail-label">入口点:</span>
+                            <span class="detail-value">0x{{ driver.entryPoint.toString(16).toUpperCase() }}</span>
+                        </div>
+                    </div>
+
+                    <div class="vendor-info" v-if="driver.vendorId || driver.deviceId">
+                        <span class="vendor-label">厂商信息:</span>
+                        VID: 0x{{ driver.vendorId.toString(16).toUpperCase().padStart(4, '0') }}, 
+                        DID: 0x{{ driver.deviceId.toString(16).toUpperCase().padStart(4, '0') }}
+                        <span v-if="driver.revision"> | Revision: {{ driver.revision }}</span>
+                        <span v-if="driver.classCode"> | Class: {{ driver.classCode }}</span>
+                    </div>
+
+                    <div class="pe-info" v-if="driver.characteristics">
+                        <span class="pe-label">PE 特性:</span>
+                        {{ getPECharacteristics(driver.characteristics) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    isDragging: false,
+                    fileInfo: null,
+                    drivers: [],
+                    error: null,
+                    warning: null,
+                    fileData: null
+                };
+            },
+            methods: {
+                triggerFileInput() {
+                    this.$refs.fileInput.click();
+                },
+                handleFileSelect(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        this.parseFile(file);
+                    }
+                },
+                handleDrop(e) {
+                    this.isDragging = false;
+                    const file = e.dataTransfer.files[0];
+                    if (file) {
+                        this.parseFile(file);
+                    }
+                },
+                async parseFile(file) {
+                    this.error = null;
+                    this.warning = null;
+                    this.fileInfo = null;
+                    this.drivers = [];
+
+                    try {
+                        const arrayBuffer = await file.arrayBuffer();
+                        this.fileData = new Uint8Array(arrayBuffer);
+                        
+                        this.fileInfo = {
+                            name: file.name,
+                            size: file.size,
+                            romCount: 0,
+                            type: null
+                        };
+
+                        if (this.fileData[0] == 0x4D && this.fileData[1] == 0x5A) {
+                            this.fileInfo.type = 'EFI 文件';
+                            this.parseStandalonePE();
+                        } else {
+                            this.fileInfo.type = 'Option ROM / 固件';
+                            // 扫描整个文件查找所有 0x55AA 签名
+                            this.scanForOptionROMs();
+                        }
+
+                        if (this.drivers.length === 0) {
+                            this.error = '未检测到 UEFI 驱动。这可能不是有效的 UEFI Option ROM 或 EFI 文件。';
+                        } else {
+                            if (!this.fileInfo.type === 'EFI 文件') {
+                                this.fileInfo.romCount = this.drivers.length;
+                            }
+                        }
+                    } catch (err) {
+                        this.error = err.message;
+                        console.error(err);
+                    }
+                },
+
+                scanForOptionROMs() {
+                    let offset = 0;
+                    const maxOffset = this.fileData.length - 28;
+                    
+                    while (offset < maxOffset) {
+                        // 查找 PCI 扩展 ROM 签名 0x55AA
+                        if (this.fileData[offset] === 0x55 && 
+                            this.fileData[offset + 1] === 0xAA) {
+                            
+                            const imageStart = offset;
+                            
+                            // 读取 PCIR 偏移（在 0x18 位置）
+                            if (offset + 0x18 + 1 >= this.fileData.length) {
+                                offset++;
+                                continue;
+                            }
+                            
+                            const pcirOffset = this.readUint16(offset + 0x18);
+                            const pcirAbsoluteOffset = imageStart + pcirOffset;
+                            
+                            // 验证 PCIR 结构
+                            if (pcirAbsoluteOffset + 24 > this.fileData.length) {
+                                offset++;
+                                continue;
+                            }
+                            
+                            // 检查 'PCIR' 签名
+                            if (this.fileData[pcirAbsoluteOffset] === 0x50 && // 'P'
+                                this.fileData[pcirAbsoluteOffset + 1] === 0x43 && // 'C'
+                                this.fileData[pcirAbsoluteOffset + 2] === 0x49 && // 'I'
+                                this.fileData[pcirAbsoluteOffset + 3] === 0x52) { // 'R'
+                                
+                                const vendorId = this.readUint16(pcirAbsoluteOffset + 4);
+                                const deviceId = this.readUint16(pcirAbsoluteOffset + 6);
+                                const length = this.readUint16(pcirAbsoluteOffset + 10);
+                                const revision = this.fileData[pcirAbsoluteOffset + 12];
+                                const classCode = this.formatClassCode(
+                                    this.fileData[pcirAbsoluteOffset + 13],
+                                    this.fileData[pcirAbsoluteOffset + 14],
+                                    this.fileData[pcirAbsoluteOffset + 15]
+                                );
+                                const imageLength = this.readUint16(pcirAbsoluteOffset + 16);
+                                const codeRevision = this.readUint16(pcirAbsoluteOffset + 18);
+                                const codeType = this.fileData[pcirAbsoluteOffset + 20];
+                                const indicator = this.fileData[pcirAbsoluteOffset + 21];
+                                
+                                // 检查是否是 EFI 镜像 (Code Type = 0x03)
+                                if (codeType === 0x03) {
+                                    const driverInfo = {
+                                        imageStart: imageStart,
+                                        imageLength: imageLength,
+                                        codeType: codeType,
+                                        indicator: indicator,
+                                        isLast: (indicator & 0x80) !== 0,
+                                        vendorId: vendorId,
+                                        deviceId: deviceId,
+                                        revision: revision,
+                                        codeRevision: codeRevision,
+                                        classCode: classCode,
+                                        isStandalone: false
+                                    };
+                                    
+                                    // 解析 EFI ROM 头
+                                    const efiInfo = this.parseEfiRomHeader(imageStart);
+                                    Object.assign(driverInfo, efiInfo);
+                                    
+                                    this.drivers.push(driverInfo);
+                                }
+                                
+                                // 跳到下一个镜像
+                                if (imageLength > 0) {
+                                    offset = imageStart + (imageLength * 512);
+                                } else {
+                                    offset++;
+                                }
+                                continue;
+                            }
+                        }
+                        offset++;
+                    }
+                },
+                parseStandalonePE() {
+                    const driverInfo = {
+                        imageStart: 0,
+                        imageLength: this.fileData.length / 512, // Assume full file is the image
+                        codeType: 0x03, // EFI_IMAGE_CODE_TYPE_EFI_IMAGE
+                        indicator: 0x80, // Last image
+                        isLast: true,
+                        isStandalone: true,
+                        efiOffset: 0, // PE starts at 0
+                        efiSize: this.fileData.length, // Initial assumption, updated by parsePEHeader
+                        compressionHeader: null,
+                        compressedSize: 0
+                    };
+
+                    this.parsePEHeader(0, driverInfo);
+
+                    // Check if PE parsing was successful and it's a valid EFI image
+                    if (driverInfo.peSignature === 'PE' && driverInfo.machineType) {
+                        this.drivers.push(driverInfo);
+                        return true;
+                    }
+                    return false;
+                },
+
+                parseEfiRomHeader(imageStart) {
+                    const info = {};
+                    
+                    // EFI_PCI_EXPANSION_ROM_HEADER 结构（从C代码）
+                    // Offset 0x00: Signature (UINT16) - 0x55AA
+                    // Offset 0x02: InitializationSize (UINT16)
+                    // Offset 0x04: EfiSignature (UINT32) - 0x0EF1
+                    // Offset 0x08: EfiSubsystem (UINT16)
+                    // Offset 0x0A: EfiMachineType (UINT16)
+                    // Offset 0x0C: CompressionType (UINT16)
+                    // Offset 0x0E: Reserved[8] (UINT8[8])
+                    // Offset 0x16: EfiImageHeaderOffset (UINT16)
+                    // Offset 0x18: PcirOffset (UINT16)
+                    
+                    if (imageStart + 0x1A > this.fileData.length) {
+                        return info;
+                    }
+                    
+                    // 验证 0x55AA 签名
+                    if (this.fileData[imageStart] !== 0x55 || this.fileData[imageStart + 1] !== 0xAA) {
+                        return info;
+                    }
+                    
+                    // 读取初始化大小（512字节为单位）
+                    const initSize = this.readUint16(imageStart + 0x02);
+                    
+                    // 读取 EFI 签名（在偏移 0x04）
+                    const efiSignature = this.readUint32(imageStart + 0x04);
+                    
+                    if (efiSignature === 0x0EF1) {
+                        info.efiSignature = efiSignature;
+                        info.subsystem = this.readUint16(imageStart + 0x08);
+                        info.machineType = this.readUint16(imageStart + 0x0A);
+                        const compressionType = this.readUint16(imageStart + 0x0C);
+                        info.compressed = (compressionType & 0x0001) !== 0;
+                        
+                        // EfiImageHeaderOffset 在偏移 0x16
+                        const efiImageHeaderOffset = this.readUint16(imageStart + 0x16);
+                        info.efiImageHeaderOffset = efiImageHeaderOffset;
+
+                        // 计算 EFI 镜像的绝对偏移
+                        const efiAbsoluteOffset = imageStart + efiImageHeaderOffset;
+                        info.efiOffset = efiAbsoluteOffset;
+
+                        if (info.compressed) {
+                            if (efiAbsoluteOffset + 8 <= this.fileData.length) {
+                                const compressedDataBuffer = this.fileData.slice(efiAbsoluteOffset);
+                                info.compressedSize = this.readUint32(efiAbsoluteOffset);
+                                info.efiSize = this.readUint32(efiAbsoluteOffset + 4); // This is the original size
+
+                                // Store the compression header itself
+                                const compressionHeaderBytes = Array.from(this.fileData.slice(efiAbsoluteOffset, efiAbsoluteOffset + 8))
+                                    .map(b => b.toString(16).padStart(2, '0').toUpperCase());
+                                info.compressionHeader = compressionHeaderBytes.join(' ');
+                                
+                                // Decompress the data to get the actual EFI image header bytes
+                                try {
+                                    const decompressedData = this.uefiDecompress(compressedDataBuffer);
+                                    if (decompressedData.length > 8) {
+                                        const decompressedHeaderBytes = Array.from(decompressedData.slice(0, 8))
+                                            .map(b => b.toString(16).padStart(2, '0').toUpperCase());
+                                        info.firstBytes = decompressedHeaderBytes.join(' ');
+                                    } else {
+                                        info.firstBytes = "Decompressed data too small";
+                                    }
+                                } catch (e) {
+                                    info.firstBytes = `Decompress Error: ${e.message}`;
+                                    console.error("Decompression error in parseEfiRomHeader:", e);
+                                }
+                            }
+                        } else {
+                            // 读取该位置的前8个字节用于调试
+                            if (efiAbsoluteOffset + 8 <= this.fileData.length) {
+                                const bytes = [];
+                                for (let i = 0; i < 8; i++) {
+                                     bytes.push(this.fileData[efiAbsoluteOffset + i].toString(16).padStart(2, '0').toUpperCase());
+                                 }
+                                info.firstBytes = bytes.join(' ');
+                             }
+                            
+                            // 尝试解析 PE 头获取实际大小
+                            this.parsePEHeader(efiAbsoluteOffset, info);
+                            
+                            // 如果无法从 PE 头获取大小，使用初始化大小
+                            if (!info.efiSize && initSize > 0) {
+                                info.efiSize = (initSize * 512) - efiImageHeaderOffset;
+                            }
+                         }
+                     }
+                    
+                    return info;
+                },
+                parsePEHeader(peStart, driverInfo) {
+                    if (peStart + 64 > this.fileData.length) {
+                        return;
+                    }
+                    
+                    // 检查 MZ 签名
+                    if (this.fileData[peStart] !== 0x4D || this.fileData[peStart + 1] !== 0x5A) {
+                        return;
+                    }
+                    
+                    driverInfo.peSignature = 'MZ';
+                    
+                    // 读取 PE 头偏移
+                    const peHeaderOffset = this.readUint32(peStart + 0x3C);
+                    const peOffset = peStart + peHeaderOffset;
+                    
+                    if (peOffset + 24 > this.fileData.length) {
+                        return;
+                    }
+                    
+                    // 验证 PE 签名
+                    if (this.fileData[peOffset] !== 0x50 || // 'P'
+                        this.fileData[peOffset + 1] !== 0x45 || // 'E'
+                        this.fileData[peOffset + 2] !== 0x00 ||
+                        this.fileData[peOffset + 3] !== 0x00) {
+                        return;
+                    }
+                    
+                    driverInfo.peSignature = 'PE';
+                    
+                    // COFF 头在 PE 签名后 4 字节
+                    const coffHeader = peOffset + 4;
+                    driverInfo.machineType = this.readUint16(coffHeader);
+                    driverInfo.sectionCount = this.readUint16(coffHeader + 2);
+                    const sizeOfOptionalHeader = this.readUint16(coffHeader + 16);
+                    driverInfo.characteristics = this.readUint16(coffHeader + 18);
+                    
+                    // 可选头
+                    const optionalHeader = coffHeader + 20;
+                    if (optionalHeader + sizeOfOptionalHeader > this.fileData.length) {
+                        return;
+                    }
+                    
+                    const magic = this.readUint16(optionalHeader);
+                    const is64bit = magic === 0x20b;
+                    
+                    // 读取关键字段
+                    const entryPointRVA = this.readUint32(optionalHeader + 16);
+                    driverInfo.entryPoint = entryPointRVA;
+                    
+                    // ImageBase 和 SizeOfImage 位置取决于是 32 位还是 64 位
+                    if (is64bit) {
+                        driverInfo.imageBase = this.readUint64(optionalHeader + 24);
+                        driverInfo.subsystem = this.readUint16(optionalHeader + 68);
+                        const sizeOfImage = this.readUint32(optionalHeader + 56);
+                        driverInfo.efiSize = sizeOfImage;
+                    } else {
+                        driverInfo.imageBase = this.readUint32(optionalHeader + 28);
+                        driverInfo.subsystem = this.readUint16(optionalHeader + 68);
+                        const sizeOfImage = this.readUint32(optionalHeader + 56);
+                        driverInfo.efiSize = sizeOfImage;
+                    }
+                },
+                formatClassCode(byte1, byte2, byte3) {
+                    return `${byte3.toString(16).padStart(2, '0')}${byte2.toString(16).padStart(2, '0')}${byte1.toString(16).padStart(2, '0')}`.toUpperCase();
+                },
+                readUint16(offset) {
+                    if (offset + 1 >= this.fileData.length) return 0;
+                    return this.fileData[offset] | (this.fileData[offset + 1] << 8);
+                },
+                readUint32(offset) {
+                    if (offset + 3 >= this.fileData.length) return 0;
+                    return this.fileData[offset] | 
+                           (this.fileData[offset + 1] << 8) | 
+                           (this.fileData[offset + 2] << 16) | 
+                           (this.fileData[offset + 3] << 24);
+                },
+                readUint64(offset) {
+                    if (offset + 7 >= this.fileData.length) return 0;
+                    const low = this.readUint32(offset);
+                    const high = this.readUint32(offset + 4);
+                    return high * 0x100000000 + low;
+                },
+                downloadDriver(driver, index) {
+                    let driverData;
+                    let filename = `driver_${index + 1}`;
+                    
+                    // 对于ROM中的EFI，必须从 efiOffset 开始提取
+                    if (driver.efiOffset !== undefined) {
+                        // 计算EFI数据的结束位置
+                        let endOffset;
+                        if (driver.efiSize) {
+                            endOffset = driver.efiOffset + driver.efiSize;
+                        } else {
+                            endOffset = driver.imageStart + (driver.imageLength * 512);
+                        }
+                        
+                        driverData = this.fileData.slice(driver.efiOffset, endOffset);
+                        
+                        // 如果是压缩的，需要解压缩
+                        if (driver.compressed) {
+                            try {
+                                driverData = this.uefiDecompress(driverData);
+                                console.log(`成功解压缩驱动 ${index + 1}`);
+                            } catch (err) {
+                                console.error(`解压缩驱动 ${index + 1} 失败:`, err);
+                                alert(`警告: 驱动 ${index + 1} 解压缩失败，将下载原始压缩数据。\n错误: ${err.message}`);
+                            }
+                        }
+                        
+                        // 验证提取的数据是否以MZ开头
+                        if (driverData.length >= 2) {
+                            if (driverData[0] !== 0x4D || driverData[1] !== 0x5A) {
+                                console.warn(`警告: 驱动 ${index + 1} 不是以 MZ 签名开头`);
+                                console.warn(`实际开头: ${driverData[0].toString(16)} ${driverData[1].toString(16)}`);
+                            }
+                        }
+                    } else {
+                        const size = driver.imageLength * 512;
+                        driverData = this.fileData.slice(driver.imageStart, driver.imageStart + size);
+                    }
+                    
+                    // 构造文件名
+                    if (driver.vendorId && driver.deviceId) {
+                        filename = `${driver.vendorId.toString(16).padStart(4, '0')}_${driver.deviceId.toString(16).padStart(4, '0')}`;
+                    }
+                    filename += `_${index + 1}`;
+                    
+                    if (driver.machineType) {
+                        filename += `_${this.getArchShortName(driver.machineType)}`;
+                    }
+                    filename += '.efi';
+                    
+                    this.downloadBlob(driverData, filename);
+                },
+                
+                // UEFI 解压缩实现
+                uefiDecompress(compressedData) {
+                    const data = new Uint8Array(compressedData);
+                    
+                    // 读取头部信息
+                    if (data.length < 8) {
+                        throw new Error('数据太小，不是有效的UEFI压缩数据');
+                    }
+                    
+                    const compSize = data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);
+                    const origSize = data[4] | (data[5] << 8) | (data[6] << 16) | (data[7] << 24);
+                    
+                    console.log(`压缩大小: ${compSize}, 原始大小: ${origSize}`);
+                    
+                    if (origSize === 0) {
+                        return new Uint8Array(0);
+                    }
+                    
+                    if (compSize + 8 > data.length) {
+                        throw new Error(`压缩大小不匹配: 需要 ${compSize + 8}, 实际 ${data.length}`);
+                    }
+                    
+                    // 创建解压缩上下文
+                    const sd = {
+                        srcBase: data.slice(8),
+                        dstBase: new Uint8Array(origSize),
+                        inBuf: 0,
+                        outBuf: 0,
+                        bitBuf: 0,
+                        bitCount: 0,
+                        subBitBuf: 0,
+                        blockSize: 0,
+                        compSize: compSize,
+                        origSize: origSize,
+                        badTableFlag: 0,
+                        pBit: 4,
+                        
+                        left: new Uint16Array(2 * 510 - 1),
+                        right: new Uint16Array(2 * 510 - 1),
+                        cLen: new Uint8Array(510),
+                        pTLen: new Uint8Array(256),
+                        cTable: new Uint16Array(4096),
+                        pTTable: new Uint16Array(256)
+                    };
+                    
+                    // 填充初始位
+                    this.fillBuf(sd, 32);
+                    
+                    // 解码
+                    this.decode(sd);
+                    
+                    if (sd.badTableFlag !== 0) {
+                        throw new Error('解压缩失败：数据损坏');
+                    }
+                    
+                    return sd.dstBase;
+                },
+                
+                fillBuf(sd, numOfBits) {
+                    sd.bitBuf = sd.bitBuf << numOfBits;
+                    
+                    while (numOfBits > sd.bitCount) {
+                        numOfBits = numOfBits - sd.bitCount;
+                        sd.bitBuf |= sd.subBitBuf << numOfBits;
+                        
+                        if (sd.compSize > 0) {
+                            sd.compSize--;
+                            sd.subBitBuf = sd.srcBase[sd.inBuf++];
+                            sd.bitCount = 8;
+                        } else {
+                            sd.subBitBuf = 0;
+                            sd.bitCount = 8;
+                        }
+                    }
+                    
+                    sd.bitCount -= numOfBits;
+                    sd.bitBuf |= sd.subBitBuf >> sd.bitCount;
+                },
+                
+                getBits(sd, numOfBits) {
+                    const outBits = sd.bitBuf >>> (32 - numOfBits);
+                    this.fillBuf(sd, numOfBits);
+                    return outBits;
+                },
+                
+                makeTable(sd, numOfChar, bitLen, tableBits, table) {
+                    const count = new Uint16Array(17);
+                    const weight = new Uint16Array(17);
+                    const start = new Uint16Array(18);
+                    
+                    for (let i = 0; i < numOfChar; i++) {
+                        if (bitLen[i] < 17) {
+                            count[bitLen[i]]++;
+                        }
+                    }
+                    
+                    start[0] = 0;
+                    start[1] = 0;
+                    
+                    for (let i = 1; i <= 16; i++) {
+                        start[i + 1] = (start[i] + (count[i] << (16 - i))) & 0xFFFF;
+                    }
+                    
+                    if (start[17] !== 0) {
+                        return -1;
+                    }
+                    
+                    const juBits = 16 - tableBits;
+                    weight[0] = 0;
+                    
+                    for (let i = 1; i <= tableBits; i++) {
+                        start[i] >>>= juBits;
+                        weight[i] = 1 << (tableBits - i);
+                    }
+                    
+                    let i = tableBits + 1;
+                    while (i <= 16) {
+                        weight[i] = 1 << (16 - i);
+                        i++;
+                    }
+                    
+                    i = start[tableBits + 1] >>> juBits;
+                    if (i !== 0) {
+                        const index3 = 1 << tableBits;
+                        for (let k = i; k < index3; k++) {
+                            table[k] = 0;
+                        }
+                    }
+                    
+                    let avail = numOfChar;
+                    const mask = (1 << (15 - tableBits)) & 0xFFFF;
+                    
+                    for (let ch = 0; ch < numOfChar; ch++) {
+                        const len = bitLen[ch];
+                        if (len === 0 || len >= 17) continue;
+                        
+                        const nextCode = start[len] + weight[len];
+                        
+                        if (len <= tableBits) {
+                            for (let j = start[len]; j < nextCode; j++) {
+                                table[j] = ch;
+                            }
+                        } else {
+                            let k = start[len];
+                            let currentArray = table; // Represents the array pointed to (Table initially)
+                            let currentEntryIndex = k >>> juBits; // Represents the index within that array
+                            let index = len - tableBits;
+                            
+                            while (index !== 0) {
+                                // If the current entry is 0 (uninitialized) and there's space for a new node
+                                if (currentArray[currentEntryIndex] === 0 && avail < (2 * 510 - 1)) {
+                                    sd.right[avail] = 0;
+                                    sd.left[avail] = 0;
+                                    currentArray[currentEntryIndex] = avail++; // Assign a new internal node index
+                                }
+                                
+                                // If the current entry is an internal node (not a leaf character)
+                                if (currentArray[currentEntryIndex] < (2 * 510 - 1)) {
+                                    const nextNodeIndex = currentArray[currentEntryIndex]; // Get the index of the next node
+                                    
+                                    if ((k & mask) !== 0) {
+                                        currentArray = sd.right; // Move "pointer" to the right child array
+                                    } else {
+                                        currentArray = sd.left; // Move "pointer" to the left child array
+                                    }
+                                    currentEntryIndex = nextNodeIndex; // Update the index within the new array
+                                }
+                                
+                                k <<= 1;
+                                index--;
+                            }
+                            
+                            // At the end of the path, assign the character to the leaf node
+                            currentArray[currentEntryIndex] = ch;
+                        }
+                        
+                        start[len] = nextCode & 0xFFFF;
+                    }
+                    
+                    return 0;
+                },
+                
+                readPTLen(sd, nn, nbit, special) {
+                    let number = this.getBits(sd, nbit);
+                    
+                    if (number === 0) {
+                        const charC = this.getBits(sd, nbit);
+                        for (let i = 0; i < 256; i++) {
+                            sd.pTTable[i] = charC;
+                        }
+                        for (let i = 0; i < nn; i++) {
+                            sd.pTLen[i] = 0;
+                        }
+                        return 0;
+                    }
+                    
+                    let index = 0;
+                    while (index < number && index < 256) {
+                        let c = sd.bitBuf >>> (32 - 3);
+                        
+                        if (c === 7) {
+                            let mask = 1 << (32 - 4);
+                            while (mask & sd.bitBuf) {
+                                mask >>>= 1;
+                                c++;
+                            }
+                        }
+                        
+                        this.fillBuf(sd, c < 7 ? 3 : c - 3);
+                        sd.pTLen[index++] = c;
+                        
+                        if (index === special) {
+                            c = this.getBits(sd, 2);
+                            while (c-- > 0 && index < 256) {
+                                sd.pTLen[index++] = 0;
+                            }
+                        }
+                    }
+                    
+                    while (index < nn && index < 256) {
+                        sd.pTLen[index++] = 0;
+                    }
+                    
+                    return this.makeTable(sd, nn, sd.pTLen, 8, sd.pTTable);
+                },
+                
+                readCLen(sd) {
+                    const number = this.getBits(sd, 9);
+                    
+                    if (number === 0) {
+                        const c = this.getBits(sd, 9);
+                        for (let i = 0; i < 510; i++) {
+                            sd.cLen[i] = 0;
+                        }
+                        for (let i = 0; i < 4096; i++) {
+                            sd.cTable[i] = c;
+                        }
+                        return;
+                    }
+                    
+                    let index = 0;
+                    while (index < number && index < 510) {
+                        let c = sd.pTTable[sd.bitBuf >>> (32 - 8)];
+                        
+                        if (c >= 19) {
+                            let mask = 1 << (32 - 9);
+                            do {
+                                if (sd.bitBuf & mask) {
+                                    c = sd.right[c];
+                                } else {
+                                    c = sd.left[c];
+                                }
+                                mask >>>= 1;
+                            } while (c >= 19);
+                        }
+                        
+                        this.fillBuf(sd, sd.pTLen[c]);
+                        
+                        if (c <= 2) {
+                            if (c === 0) {
+                                c = 1;
+                            } else if (c === 1) {
+                                c = this.getBits(sd, 4) + 3;
+                            } else {
+                                c = this.getBits(sd, 9) + 20;
+                            }
+                            
+                            while (c-- > 0 && index < 510) {
+                                sd.cLen[index++] = 0;
+                            }
+                        } else {
+                            sd.cLen[index++] = c - 2;
+                        }
+                    }
+                    
+                    while (index < 510) {
+                        sd.cLen[index++] = 0;
+                    }
+                    
+                    this.makeTable(sd, 510, sd.cLen, 12, sd.cTable);
+                },
+                
+                decodeC(sd) {
+                    if (sd.blockSize === 0) {
+                        sd.blockSize = this.getBits(sd, 16);
+                        sd.badTableFlag = this.readPTLen(sd, 19, 5, 3);
+                        if (sd.badTableFlag !== 0) return 0;
+                        this.readCLen(sd); // Added missing call
+                        sd.badTableFlag = this.readPTLen(sd, 256, sd.pBit, -1);
+                        if (sd.badTableFlag !== 0) return 0;
+                    }
+                    
+                    sd.blockSize--;
+                    let index2 = sd.cTable[sd.bitBuf >>> (32 - 12)]; // Fixed unsigned right shift
+                    
+                    if (index2 >= 510) {
+                        let mask = 1 << (32 - 13);
+                        do {
+                            if (sd.bitBuf & mask) {
+                                index2 = sd.right[index2];
+                            } else {
+                                index2 = sd.left[index2];
+                            }
+                            mask >>>= 1; // Fixed unsigned right shift
+                        } while (index2 >= 510);
+                    }
+                    
+                    this.fillBuf(sd, sd.cLen[index2]);
+                    return index2;
+                },
+                
+                decodeP(sd) {
+                    let val = sd.pTTable[sd.bitBuf >>> (32 - 8)];
+                    
+                    if (val >= 256) {
+                        let mask = 1 << (32 - 9);
+                        do {
+                            if (sd.bitBuf & mask) {
+                                val = sd.right[val];
+                            } else {
+                                val = sd.left[val];
+                            }
+                            mask >>>= 1;
+                        } while (val >= 256);
+                    }
+                    
+                    this.fillBuf(sd, sd.pTLen[val]);
+                    
+                    let pos = val;
+                    if (val > 1) {
+                        pos = ((1 << (val - 1)) + this.getBits(sd, val - 1)) >>> 0;
+                    }
+                    
+                    return pos;
+                },
+                
+                decode(sd) {
+                    while (sd.outBuf < sd.origSize) {
+                        const c = this.decodeC(sd);
+                        if (sd.badTableFlag !== 0) break;
+                        
+                        if (c < 256) {
+                            sd.dstBase[sd.outBuf++] = c;
+                        } else {
+                            const matchLen = c - 256 + 3;
+                            const matchDist = this.decodeP(sd) + 1;
+                            
+                            let srcIdx = (sd.outBuf - matchDist) >>> 0;
+                            for (let i = 0; i < matchLen && sd.outBuf < sd.origSize; i++) {
+                                sd.dstBase[sd.outBuf++] = sd.dstBase[srcIdx++];
+                            }
+                        }
+                    }
+                },
+                downloadAll() {
+                    this.drivers.forEach((driver, index) => {
+                        setTimeout(() => {
+                            this.downloadDriver(driver, index);
+                        }, index * 100);
+                    });
+                },
+                downloadBlob(data, filename) {
+                    const blob = new Blob([data], { type: 'application/octet-stream' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                },
+                formatSize(bytes) {
+                    if (bytes < 1024) return bytes + ' B';
+                    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+                    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+                },
+                getCodeTypeName(type) {
+                    const types = {
+                        0x00: 'x86/PC-AT Compatible',
+                        0x01: 'Open Firmware',
+                        0x02: 'HP PA RISC',
+                        0x03: 'EFI Image'
+                    };
+                    return types[type] || `Unknown (0x${type.toString(16)})`;
+                },
+                getArchName(machineType) {
+                    const archs = {
+                        0x014c: 'x86 (IA-32)',
+                        0x8664: 'x64 (AMD64)',
+                        0x0200: 'IA64 (Itanium)',
+                        0xaa64: 'ARM64 (AArch64)',
+                        0xaa64: 'AA64',
+                        0x01c2: 'ARM (Thumb-2)',
+                        0x01c0: 'ARM (Thumb)',
+                        0x01c4: 'ARMv7',
+                        0x5032: 'RISC-V 32-bit',
+                        0x5064: 'RISC-V 64-bit',
+                        0x5128: 'RISC-V 128-bit',
+                        0x0ebc: 'EFI Byte Code',
+                        0x8664: 'x64',
+                        0x0166: 'MIPS (R4000)',
+                        0x0266: 'MIPS16',
+                        0x0366: 'MIPS FPU',
+                        0x0466: 'MIPS FPU16',
+                        0x0284: 'Alpha AXP 64-bit',
+                        0x01f0: 'PowerPC',
+                        0x01f1: 'PowerPC FP',
+                        0x0200: 'IA64',
+                        0x9041: 'M32R',
+                        0x6232: 'LoongArch32',
+                        0x6264: 'LoongArch64'
+                    };
+                    return archs[machineType] || `Unknown (0x${machineType.toString(16)})`;
+                },
+                getArchShortName(machineType) {
+                    const archs = {
+                        0x014c: 'x86',
+                        0x8664: 'x64',
+                        0x0200: 'ia64',
+                        0xaa64: 'aa64',
+                        0x01c2: 'arm',
+                        0x01c0: 'arm',
+                        0x01c4: 'armv7',
+                        0x5032: 'riscv32',
+                        0x5064: 'riscv64',
+                        0x6232: 'la32',
+                        0x6264: 'la64',
+                        0x0ebc: 'ebc',
+                        0x0166: 'mips',
+                        0x0284: 'alpha',
+                        0x01f0: 'ppc'
+                    };
+                    return archs[machineType] || 'unknown';
+                },
+                getSubsystemName(subsystem) {
+                    const subsystems = {
+                        0x00: 'Unknown',
+                        0x01: 'Native',
+                        0x02: 'Windows GUI',
+                        0x03: 'Windows CUI',
+                        0x07: 'POSIX CUI',
+                        0x09: 'Windows CE GUI',
+                        0x0a: 'EFI Application',
+                        0x0b: 'EFI Boot Service Driver',
+                        0x0c: 'EFI Runtime Driver',
+                        0x0d: 'EFI ROM Image',
+                        0x0e: 'XBOX'
+                    };
+                    return subsystems[subsystem] || `Other (0x${subsystem.toString(16)})`;
+                },
+                getPECharacteristics(characteristics) {
+                    const flags = [];
+                    if (characteristics & 0x0001) flags.push('Relocs Stripped');
+                    if (characteristics & 0x0002) flags.push('Executable');
+                    if (characteristics & 0x0004) flags.push('Line Nums Stripped');
+                    if (characteristics & 0x0008) flags.push('Local Syms Stripped');
+                    if (characteristics & 0x0020) flags.push('Large Address Aware');
+                    if (characteristics & 0x0100) flags.push('32-bit');
+                    if (characteristics & 0x0200) flags.push('Debug Stripped');
+                    if (characteristics & 0x1000) flags.push('System');
+                    if (characteristics & 0x2000) flags.push('DLL');
+                    return flags.join(', ') || 'None';
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
